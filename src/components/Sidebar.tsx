@@ -10,7 +10,13 @@ export default function Sidebar() {
   const [manifests, setManifests] = useState<ManifestLink[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:8080/manifests")
+  const token = localStorage.getItem("token");
+  console.log("token", token);
+    fetch("http://localhost:8080/manifests", {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : ""
+      }
+    })
       .then((res) => res.json())
       .then(setManifests);
   }, []);

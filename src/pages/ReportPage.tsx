@@ -1,27 +1,36 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ReportTable from "../components/ReportTable";
+
+// ================== Interfaces Corrigidas ==================
 
 interface Param {
   name: string;
   label: string;
   type: string;
+  options?: { value: any; label: string }[];
 }
-interface Column {
-  name: string;
-  label: string;
+
+interface ReportOutput {
   type: string;
+  columns: { name: string; label: string; type: string }[];
+  headerLayout?: { label: string; rowSpan?: number; colSpan?: number }[][];
 }
+
 interface Manifest {
   name: string;
   queryFile: string;
-  params?: Param[];
-  output: { type: string; columns: Column[] };
+  params?: Param[]; // <-- A correção principal estava aqui
+  output: ReportOutput;
 }
+
 interface ReportResponse {
-  columns: Column[];
+  output: ReportOutput;
   data: Record<string, any>[];
 }
+
+// ==========================================================
+
 
 export default function ReportPage({ reportName }: { reportName: string }) {
   const [manifest, setManifest] = useState<Manifest | null>(null);
@@ -30,30 +39,47 @@ export default function ReportPage({ reportName }: { reportName: string }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:8080/manifests/${reportName}`)
+    const token = localStorage.getItem("token");
+    fetch(`http://localhost:8080/manifests/${reportName}`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    })
       .then((res) => res.json())
       .then((data: Manifest) => {
         setManifest(data);
         const initialParams: Record<string, any> = {};
-        data.params?.forEach((p) => (initialParams[p.name] = ""));
+        // Agora 'data.params' é corretamente identificado como um array
+        data.params?.forEach((p) => {
+          if (p.type === "select" && p.options && p.options.length > 0) {
+            initialParams[p.name] = p.options[0].value;
+          } else {
+            initialParams[p.name] = "";
+          }
+        });
         setParams(initialParams);
-        if (!data.params || data.params.length === 0)
-          fetchReport(initialParams);
       });
   }, [reportName]);
 
-  const fetchReport = (currentParams?: Record<string, any>) => {
+  const fetchReport = () => {
     if (!manifest) return;
     const filteredParams: Record<string, any> = {};
-    const p = currentParams || params;
-    for (const key in p)
-      if (p[key] !== "" && p[key] != null) filteredParams[key] = p[key];
+    for (const key in params) {
+      filteredParams[key] = params[key] || null;
+    }
+
     const queryString = new URLSearchParams(filteredParams).toString();
     setLoading(true);
+    const token = localStorage.getItem("token");
     fetch(
       `http://localhost:8080/reports/${reportName}${
         queryString ? `?${queryString}` : ""
-      }`
+      }`,
+      {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      }
     )
       .then((res) => res.json())
       .then(setReport)
@@ -65,31 +91,62 @@ export default function ReportPage({ reportName }: { reportName: string }) {
   return (
     <div className="p-4">
       <h1 className="text-xl mb-4">{manifest.name}</h1>
-      {manifest.params && manifest.params.length > 0 && (
-        <div className="mb-4 space-x-2">
-          {manifest.params.map((p) => (
-            <span key={p.name}>
-              <label>{p.label}: </label>
-              <input
-                type={p.type === "number" ? "number" : "text"}
-                value={params[p.name]}
-                onChange={(e) =>
-                  setParams({ ...params, [p.name]: e.target.value })
-                }
-                className="border px-2 py-1"
-              />
-            </span>
-          ))}
-          <button
-            onClick={() => fetchReport()}
-            className="bg-blue-500 text-white px-3 py-1"
-          >
-            Filtrar
-          </button>
-        </div>
-      )}
+      {/* Agora 'manifest.params' é corretamente identificado como um array */}
+      {manifest.params?.map((p) => (
+        <span key={p.name} className="mr-4">
+          <label>{p.label}: </label>
+          {p.type === 'datetime-local' ? (
+             <input
+              type="datetime-local"
+              value={params[p.name] || ''}
+              onChange={(e) =>
+                setParams({ ...params, [p.name]: e.target.value })
+              }
+              className="border px-2 py-1"
+            />
+          ) : p.type === "select" ? (
+            <select
+              value={params[p.name]}
+              onChange={(e) =>
+                setParams({ ...params, [p.name]: e.target.value })
+              }
+              className="border px-2 py-1"
+            >
+              <option value="">Selecione</option>
+              {p.options?.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={p.type === "number" ? "number" : "text"}
+              value={params[p.name]}
+              onChange={(e) =>
+                setParams({ ...params, [p.name]: e.target.value })
+              }
+              className="border px-2 py-1"
+            />
+          )}
+        </span>
+      ))}
+
+      <button
+        onClick={fetchReport}
+        className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
+      >
+        Filtrar
+      </button>
+
       {loading && <p>Carregando dados...</p>}
-      {report && <ReportTable report={report} />}
+      
+      {report && (
+        <ReportTable 
+          output={report.output} 
+          data={report.data} 
+        />
+      )}
     </div>
   );
 }
