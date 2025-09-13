@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import ReportTable from "../components/ReportTable";
+import API from "../services/api";
 
 // ================== Interfaces Corrigidas ==================
 
@@ -39,13 +40,7 @@ export default function ReportPage({ reportName }: { reportName: string }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch(`http://localhost:8080/manifests/${reportName}`, {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    })
-      .then((res) => res.json())
+    API.getManifest(reportName)
       .then((data: Manifest) => {
         setManifest(data);
         const initialParams: Record<string, any> = {};
@@ -63,25 +58,9 @@ export default function ReportPage({ reportName }: { reportName: string }) {
 
   const fetchReport = () => {
     if (!manifest) return;
-    const filteredParams: Record<string, any> = {};
-    for (const key in params) {
-      filteredParams[key] = params[key] || null;
-    }
-
-    const queryString = new URLSearchParams(filteredParams).toString();
+    
     setLoading(true);
-    const token = localStorage.getItem("token");
-    fetch(
-      `http://localhost:8080/reports/${reportName}${
-        queryString ? `?${queryString}` : ""
-      }`,
-      {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      }
-    )
-      .then((res) => res.json())
+    API.getReport(reportName, params)
       .then(setReport)
       .finally(() => setLoading(false));
   };
