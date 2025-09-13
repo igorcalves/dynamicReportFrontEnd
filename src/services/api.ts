@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Obtém o endereço base da API das variáveis de ambiente
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 // Helpers para requisições à API
 export const API = {
   // URL base da API
   baseUrl: API_BASE_URL,
-  
+
   // Obter o manifesto do relatório
   getManifest: async (reportName: string): Promise<any> => {
     const token = localStorage.getItem("token");
@@ -18,10 +18,15 @@ export const API = {
     });
     return response.json();
   },
-  
+
   // Obter dados do relatório
-  getReport: async (reportName: string, params: Record<string, any>): Promise<any> => {
+  getReport: async (
+    reportName: string,
+    params: Record<string, any>
+  ): Promise<any> => {
     const token = localStorage.getItem("token");
+    console.log("Fetching manifest for report:", token);
+
     const filteredParams: Record<string, any> = {};
     for (const key in params) {
       filteredParams[key] = params[key] || null;
@@ -39,7 +44,7 @@ export const API = {
       }
     );
     return response.json();
-  }
+  },
 };
 
 export default API;

@@ -1,0 +1,48 @@
+{
+  "name": "Relatório de Dados 15",
+  "queryFile": "tb_dados15.sql",
+  "params": [
+    {
+      "name": "siteID",
+      "type": "select",
+      "label": "Estação",
+      "dataSource": "tb_dados15_select.sql",
+      "valueField": "site_id",
+      "labelField": "site_id"
+    }
+  ],
+  "output": {
+    "type": "table",
+    "columns": [
+      { "name": "NOME_ESTACAO", "label": "Estação", "type": "string" },
+      { "name": "NOME_FAIXA", "label": "Faixa", "type": "string" },
+      { "name": "DATA_HORA", "label": "Data/Hora", "type": "string" },
+      { "name": "VOLUME_MOTOS", "label": "Volume Motos", "type": "number" },
+      { "name": "VOLUME_AUTO", "label": "Volume Autos", "type": "number" },
+      { "name": "VOLUME_COM", "label": "Volume Comerciais", "type": "number" },
+      { "name": "VOLUME_LONGO", "label": "Volume Longos", "type": "number" },
+      { "name": "VOLUME_TOTAL", "label": "Volume Total", "type": "number" },
+      {
+        "name": "VEL_MEDIA_MOTOS",
+        "label": "Vel. Média Motos",
+        "type": "number"
+      },
+      {
+        "name": "VEL_MEDIA_AUTOS",
+        "label": "Vel. Média Autos",
+        "type": "number"
+      },
+      {
+        "name": "VEL_MEDIA_COM",
+        "label": "Vel. Média Comerciais",
+        "type": "number"
+      },
+      {
+        "name": "VEL_MEDIA_LONGO",
+        "label": "Vel. Média Longos",
+        "type": "number"
+      },
+      { "name": "TAXA_OCUPACAO", "label": "Taxa de Ocupação", "type": "number" }
+    ]
+  }
+}
