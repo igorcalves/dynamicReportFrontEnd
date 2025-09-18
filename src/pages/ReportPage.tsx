@@ -4,6 +4,7 @@ import ReportTable from "../components/ReportTable";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import logo from "../assets/tracevia_do_brasil_logo.jpeg";
+import MultiSelect from "../components/MultiSelect";
 // ================== Interfaces Corrigidas ==================
 
 interface Param {
@@ -54,6 +55,8 @@ export default function ReportPage({ reportName }: { reportName: string }) {
         data.params?.forEach((p) => {
           if (p.type === "select" && p.options && p.options.length > 0) {
             initialParams[p.name] = p.options[0].value;
+          } else if (p.type === "select-multi") {
+            initialParams[p.name] = [];
           } else {
             initialParams[p.name] = "";
           }
@@ -222,6 +225,23 @@ export default function ReportPage({ reportName }: { reportName: string }) {
                 </option>
               ))}
             </select>
+          ) : p.type === "select-multi" ? (
+            <MultiSelect
+              name={p.name}
+              options={
+                p.options
+                  ? p.options.map((opt) => ({
+                      value: opt.value,
+                      label: opt.label,
+                    }))
+                  : []
+              }
+              value={Array.isArray(params[p.name]) ? params[p.name] : []}
+              onChange={(val) => {
+                console.log("MultiSelect onChange", p.name, val);
+                setParams({ ...params, [p.name]: val });
+              }}
+            />
           ) : (
             <input
               type={p.type === "number" ? "number" : "text"}

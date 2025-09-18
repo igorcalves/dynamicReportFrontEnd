@@ -1,11 +1,31 @@
 {
-  "name": "Relatório de Dados 15",
-  "queryFile": "tb_dados15.sql",
+  "name": "Relatório Agrupado Dados 15",
+  "queryFile": "tb_dados15_grouped.sql",
   "params": [
     {
-      "name": "siteID",
+      "name": "period",
       "type": "select",
-      "label": "Estação",
+      "label": "Período",
+      "options": [
+        { "value": "hour", "label": "Hora" },
+        { "value": "minute", "label": "15 Minutos" },
+        { "value": "day", "label": "Dia" }
+      ]
+    },
+    {
+      "name": "startDate",
+      "type": "datetime-local",
+      "label": "De"
+    },
+    {
+      "name": "endDate",
+      "type": "datetime-local",
+      "label": "Até"
+    },
+    {
+      "name": "stations",
+      "type": "select-multi",
+      "label": "Estações",
       "dataSource": "tb_dados15_select.sql",
       "valueField": "site_id",
       "labelField": "site_id"
@@ -14,35 +34,7 @@
   "output": {
     "type": "table",
     "columns": [
-      { "name": "NOME_ESTACAO", "label": "Estação", "type": "string" },
-      { "name": "NOME_FAIXA", "label": "Faixa", "type": "string" },
-      { "name": "DATA_HORA", "label": "Data/Hora", "type": "string" },
-      { "name": "VOLUME_MOTOS", "label": "Volume Motos", "type": "number" },
-      { "name": "VOLUME_AUTO", "label": "Volume Autos", "type": "number" },
-      { "name": "VOLUME_COM", "label": "Volume Comerciais", "type": "number" },
-      { "name": "VOLUME_LONGO", "label": "Volume Longos", "type": "number" },
-      { "name": "VOLUME_TOTAL", "label": "Volume Total", "type": "number" },
-      {
-        "name": "VEL_MEDIA_MOTOS",
-        "label": "Vel. Média Motos",
-        "type": "number"
-      },
-      {
-        "name": "VEL_MEDIA_AUTOS",
-        "label": "Vel. Média Autos",
-        "type": "number"
-      },
-      {
-        "name": "VEL_MEDIA_COM",
-        "label": "Vel. Média Comerciais",
-        "type": "number"
-      },
-      {
-        "name": "VEL_MEDIA_LONGO",
-        "label": "Vel. Média Longos",
-        "type": "number"
-      },
-      { "name": "TAXA_OCUPACAO", "label": "Taxa de Ocupação", "type": "number" }
+      { "name": "DataAgrupada", "label": "Data Agrupada", "type": "string" }
     ]
   }
 }
