@@ -92,15 +92,29 @@ export default function ReportPage({ reportName }: { reportName: string }) {
 
   if (!manifest) return <div>Carregando manifesto...</div>;
 
-  // Função para exportar para Excel customizado
+  // Função para obter colunas dinamicamente do backend
+  function getDynamicColumns(report: ReportResponse | null) {
+    if (report?.output?.columns && report.output.columns.length > 0) {
+      return report.output.columns;
+    }
+    if (report?.data && report.data.length > 0) {
+      return Object.keys(report.data[0]).map((key) => ({
+        name: key,
+        label: key,
+        type: "string",
+      }));
+    }
+    return [];
+  }
+
+  // Função para exportar para Excel customizado (dinâmico)
   const exportToExcel = async () => {
     if (!report || !manifest) return;
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Relatório");
 
-    const columns = manifest.output.columns;
-    // Mesclar células A1 até última coluna dinamicamente e aplicar fundo amarelo
-    const lastColLetter = worksheet.getColumn(columns.length + 1).letter; // +1 porque começa na coluna B
+    const columns = getDynamicColumns(report);
+    const lastColLetter = worksheet.getColumn(columns.length + 1).letter;
     worksheet.mergeCells(`A1:${lastColLetter}1`);
     worksheet.getCell("A1").value = manifest.name;
     worksheet.getCell("A1").fill = {
@@ -109,12 +123,9 @@ export default function ReportPage({ reportName }: { reportName: string }) {
       fgColor: { argb: "FFFF00" },
     };
 
-    const firstCols = columns.slice(0, 13);
-    const restCols = columns.slice(13);
-
     // Escrever cabeçalhos
-    firstCols.forEach((col, idx) => {
-      const cell = worksheet.getCell(2, idx + 2); // começa na coluna B
+    columns.forEach((col, idx) => {
+      const cell = worksheet.getCell(2, idx + 1);
       cell.value = col.label;
       cell.fill = {
         type: "pattern",
@@ -123,23 +134,9 @@ export default function ReportPage({ reportName }: { reportName: string }) {
       };
     });
 
-    // Pintar linha 2 (A2 até última coluna de dados) de amarelo, baseado na quantidade de colunas
-    const totalCols = columns.length;
-    for (let colIdx = 1; colIdx <= totalCols + 1; colIdx++) {
-      // +1 porque começa na coluna B
-      const cell = worksheet.getCell(2, colIdx);
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFF00" },
-      };
-    }
-
-    // Pintar coluna A (A2 até última linha de dados) de amarelo
-    const totalRows = report.data.length;
-    for (let i = 2; i <= totalRows + 2; i++) {
-      const cell = worksheet.getCell(i, 1); // coluna A
-      cell.fill = {
+    // Pintar linha 2 de amarelo
+    for (let colIdx = 1; colIdx <= columns.length; colIdx++) {
+      worksheet.getCell(2, colIdx).fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: "FFFF00" },
@@ -148,22 +145,13 @@ export default function ReportPage({ reportName }: { reportName: string }) {
 
     // Escrever dados
     report.data.forEach((row, rowIdx) => {
-      firstCols.forEach((col, colIdx) => {
-        worksheet.getCell(rowIdx + 3, colIdx + 2).value = row[col.name]; // começa na coluna B
-      });
-      restCols.forEach((col, colIdx) => {
-        worksheet.getCell(rowIdx + 3, colIdx + 6).value = row[col.name];
+      columns.forEach((col, colIdx) => {
+        worksheet.getCell(rowIdx + 3, colIdx + 1).value = row[col.name];
       });
     });
 
-    // Definir largura da coluna A
-    worksheet.getColumn(1).width = 3;
-
-    // Ajustar largura das demais colunas conforme o tamanho do texto
-    const allCols = [...firstCols, ...restCols];
-    allCols.forEach((col, idx) => {
-      // idx + 2 porque começa na coluna B
-      const colIndex = idx + 2;
+    // Ajustar largura das colunas
+    columns.forEach((col, idx) => {
       let maxLength = col.label.length;
       report.data.forEach((row) => {
         const value = row[col.name];
@@ -171,7 +159,7 @@ export default function ReportPage({ reportName }: { reportName: string }) {
           maxLength = value.toString().length;
         }
       });
-      worksheet.getColumn(colIndex).width = Math.max(maxLength + 2, 10); // largura mínima 10
+      worksheet.getColumn(idx + 1).width = Math.max(maxLength + 2, 10);
     });
 
     // Adicionar imagem na célula A1
@@ -274,7 +262,15 @@ export default function ReportPage({ reportName }: { reportName: string }) {
 
       {loading && <p>Carregando dados...</p>}
 
-      {report && <ReportTable output={report.output} data={report.data} />}
+      {report && (
+        <ReportTable
+          output={{
+            ...report.output,
+            columns: getDynamicColumns(report),
+          }}
+          data={report.data}
+        />
+      )}
     </div>
   );
 }
